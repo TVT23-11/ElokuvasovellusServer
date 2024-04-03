@@ -1,9 +1,13 @@
 const dotenv = require('dotenv').config();
 var express = require('express');
 const https = require('https');
-
+const pgPool = require('./database/pg_connection');
 const App=express();
+const cors = require('cors');
 //App.use(express.json);
+
+App.use(express.static('public'));
+App.use(cors());
 
 App.get('/', () => {
     let data = '';
