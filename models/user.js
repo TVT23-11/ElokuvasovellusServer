@@ -29,13 +29,13 @@ const User = {
 
   },
   checkPassword: function (user, callback) {
-    return DB.query('select password from users where username like $1', [user], callback)
+    return DB.query('select password from users where username like $1', [user], callback);
   },
   isUsernameAvailable: function (username, callback){
-    return DB.query('select * from users where username like $1', [username], callback)
+    return DB.query('select * from users where username like $1', [username], callback);
   },
   isEmailAvailable: function (email, callback){
-    return DB.query('select * from users where email like $1', [email], callback)
+    return DB.query('select * from users where email like $1', [email], callback);
   },
   getAll: function(callback) {
     console.log('users here');
