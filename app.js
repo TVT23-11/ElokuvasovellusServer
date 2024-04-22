@@ -17,7 +17,7 @@ App.use('/TMDB', TMDB_router);
 App.use('/user', User_router);
 App.use('/groups', Groups_router);
 
-App.use(authenticateToken);
+//App.use(authenticateToken);
 
 App.listen(process.env.PORT, function(err){
     if (err) console.log(err);
