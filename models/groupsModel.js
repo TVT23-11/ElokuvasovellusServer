@@ -42,7 +42,7 @@ const GROUPS = {
     listGroups: async function(token, callback){
         let tokenData = await parseJwt(token);
         let username = tokenData.username; 
-        DB.query('select groups.idgroup, groups.description, (select count(user_groups.idusergroup) from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isMember, (select user_groups.accepted from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isAccepted from groups;', [username], callback);
+        DB.query('select groups.idgroup, groups.description, groups.name, (select count(user_groups.idusergroup) from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isMember, (select user_groups.accepted from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isAccepted from groups;', [username], callback);
         //const error = {error: 'Function not yet implemented', gropRequested: groupData.group};
         //callback(error);
     },
