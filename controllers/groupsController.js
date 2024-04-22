@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv').config();
 const router = express.Router();
 const Group = require('../models/groupsModel');
-router.use(express.urlencoded());
+router.use(express.urlencoded({extended:false}));
 router.use(express.json());
 
 
@@ -19,14 +19,14 @@ router.get('/', function (request, response) {
     });
 });
 
-// Heataan id perusteella
-router.get('/:id', function (request, response) {
-    Group.getById(request.params.id, function (err, dbResult) {
+// Heataan kaikki ryhmät sekä tieto siitä, onko käyttäjä ryhmän jäsen
+router.get('/:token', function (request, response) {
+    Group.listGroups(request.params.token, function (err, dbResult) {
         if (err) {
             response.json(err);
         } else {
             console.log(dbResult.rows);
-            console.log("getById");
+            console.log("getByToken");
             response.json(dbResult.rows);
         }
     });
