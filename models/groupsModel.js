@@ -20,7 +20,6 @@ const GROUPS = {
 
     // Päivitä ryhmä id:n perusteella
     update: function (id, newData, callback) {
-        // Oletetaan, että newData on objekti, jossa on päivitettävät tiedot
         const { name, description, date } = newData;
         DB.query('UPDATE groups SET name = $1, description = $2, date = $3 WHERE idgroup = $4', [name, description, date, id], callback);
     },
