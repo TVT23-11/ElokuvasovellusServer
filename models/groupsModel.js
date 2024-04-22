@@ -1,10 +1,41 @@
 const DB = require('../database/pg_connection');
+const { jwtDecode } = require('jwt-decode');
+
+async function checkGroupName(name){
+    if(name ==''){
+        return false;
+    }
+    const result = await DB.query('SELECT * FROM groups WHERE name like $1', [name]);
+    if(result.rowCount > 0){
+        return false
+    }
+    return true;
+}
+
+async function parseJwt (token) {
+    //return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    return jwtDecode(token);
+}
 
 const GROUPS = {
     // Lisää uusi ryhmä
-    add: function (groupData, callback) {
-        console.log(groupData);
-        DB.query('INSERT INTO groups (name, description, date) values ($1,$2,$3)', [groupData.name, groupData.description, groupData.date], callback);
+    add: async function (groupData, callback) {
+        const nameIsAvailable = await checkGroupName(groupData.name);
+        if(nameIsAvailable){
+            const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
+            const result = await DB.query('INSERT INTO groups (name, description) values ($1,$2) RETURNING idgroup', [groupData.name, groupData.description]);
+            if(result.rowCount > 0){ //Rivin lisäys onnistui
+                //Lisätään käyttäjä ryhmään admin -oikeudella
+                DB.query('INSERT INTO user_groups (iduser, idgroup, accepted, isadmin) values ((select iduser from users where username like $1), $2, true, true)', [tokenData.username, result.rows[0].idgroup], callback);
+            } else {
+                const error = {error: 'Group name not available'};
+                callback(error);
+            }
+        }
+        else{
+            const error = {error: 'Group name not available'};
+            callback(error);
+        }
     },
 
     // Hae kaikki ryhmät
@@ -15,6 +46,12 @@ const GROUPS = {
     // Hae ryhmä id:n perusteella
     getById: function (id, callback) {
         DB.query('SELECT * FROM groups WHERE idgroup = $1', [id], callback);
+        
+    },
+
+    // Hae ryhmä id:n perusteella
+    getByName: function (name, callback) {
+        DB.query('SELECT * FROM groups WHERE name like $1', [name], callback);
         
     },
 
