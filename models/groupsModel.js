@@ -37,6 +37,19 @@ const GROUPS = {
             callback(error);
         }
     },
+    requestPermission: async function (groupData, callback) {
+        if(groupData.token==''){
+            const error = {error: 'User not found'};
+            callback(error);
+        }
+        else{
+            const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
+            const username = tokenData.username;
+            const groupId = groupData.idgroup; 
+            console.log(username + ": " +groupId);
+        }
+        
+    },
 
     // Hae kaikki ryhmät
     getAll: function (callback) {
