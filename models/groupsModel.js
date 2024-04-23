@@ -51,6 +51,15 @@ const GROUPS = {
         
     },
 
+    // Liittymispyyntö ryhmään
+    listGroups: async function(token, callback){
+        let tokenData = await parseJwt(token);
+        let username = tokenData.username; 
+        DB.query('select groups.idgroup, groups.description, groups.name, (select count(user_groups.idusergroup) from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isMember, (select user_groups.accepted from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isAccepted from groups;', [username], callback);
+        //const error = {error: 'Function not yet implemented', gropRequested: groupData.group};
+        //callback(error);
+    },
+
     // Hae kaikki ryhmät
     getAll: function (callback) {
         DB.query('SELECT * FROM groups', callback);
@@ -70,7 +79,6 @@ const GROUPS = {
 
     // Päivitä ryhmä id:n perusteella
     update: function (id, newData, callback) {
-        // Oletetaan, että newData on objekti, jossa on päivitettävät tiedot
         const { name, description, date } = newData;
         DB.query('UPDATE groups SET name = $1, description = $2, date = $3 WHERE idgroup = $4', [name, description, date, id], callback);
     },

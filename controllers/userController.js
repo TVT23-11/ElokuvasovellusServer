@@ -4,6 +4,12 @@ const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
+const { jwtDecode } = require('jwt-decode');
+
+async function parseJwt (token) {
+    return jwtDecode(token);
+}
+
 
 // Uuden käyttäjän lisäys
 Router.post('/register',
@@ -95,6 +101,24 @@ Router.get('/checkEmail',
         });
     });
 
+    // Käyttäjätilin poisto
+Router.delete('/',
+ async function (request, response)
+  { console.log('delete');
+    let tokendata = await parseJwt(request.query.id);
+    let username = tokendata.username;
+    User.deleteUser(username, function (err, dbResult) {
+        if (err) {
+            response.json(err);
+        } else {
+            if (dbResult.rowCount > 0) {
+                response.status(200).json('Käyttäjätili poistettiin onnistuneesti');
+            } else {
+                response.status(404).json('Käyttäjätiliä ei löytynyt');
+            }
+        }
+    });
+});
 
 function generateAccessToken(username) {
     return jwt.sign(username, process.env.JWT_SECRET_KEY, { expiresIn: '1800s' });
