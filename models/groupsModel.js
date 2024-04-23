@@ -13,7 +13,6 @@ async function checkGroupName(name){
 }
 
 async function parseJwt (token) {
-    //return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     if(token == ''){
         return '';
     }
@@ -52,6 +51,7 @@ const GROUPS = {
             }
         }
     },
+    // Pyydä ryhmäänpääsyä
     requestGroupMembership: async function (groupData, callback) {
         if(groupData.token == ''){
             const error = {error: 'User not found'};
@@ -62,10 +62,11 @@ const GROUPS = {
             const username = tokenData.username;
             const groupId = groupData.group; 
             console.log(groupData);
-            return DB.query('INSERT INTO user_groups (iduser, idgroup) values ((select iduser from users where username like $1), $2)', [username, groupId], callback);
+            DB.query('INSERT INTO user_groups (iduser, idgroup) values ((select iduser from users where username like $1), $2)', [username, groupId], callback);
         }
         
     },
+    // Hae käyttäjän hallinnoimien ryhmien liittymispyynnöt hyväksyttäväksi
     joinRequests: async function (token, callback) {
         if(token == ''){
             const error = {error: 'User not found'};
@@ -74,10 +75,11 @@ const GROUPS = {
         else{
             const tokenData = await parseJwt(token); //puretaan tokenin payload luettavaan muotoon
             const username = tokenData.username;
-            return DB.query('select groups.name as groupname, users.username, user_groups.iduser, user_groups.idgroup from user_groups join groups on user_groups.idgroup = groups.idgroup join users on user_groups.iduser = users.iduser where user_groups.idgroup in (select idgroup from user_groups where iduser = (select iduser from users where username like $1) and isadmin = true) and user_groups.accepted = false order by groups.name;', [username], callback);
+            DB.query('select groups.name as groupname, users.username, user_groups.iduser, user_groups.idgroup from user_groups join groups on user_groups.idgroup = groups.idgroup join users on user_groups.iduser = users.iduser where user_groups.idgroup in (select idgroup from user_groups where iduser = (select iduser from users where username like $1) and isadmin = true) and user_groups.accepted = false order by groups.name;', [username], callback);
         }
         
     },
+    // Hyväksy käyttäjä ryhmään
     acceptToGroup: async function (groupData, callback) {
         if(groupData === 'undefined'){
             const error = {error: 'User not found'};
@@ -86,18 +88,26 @@ const GROUPS = {
         else{
             const user = groupData.user;
             const group = groupData.group;
-            return DB.query('update user_groups set accepted=true, joined_at=now() where iduser = $1 and idgroup = $2', [user, group], callback);
+            DB.query('update user_groups set accepted=true, joined_at=now() where iduser = $1 and idgroup = $2;', [user, group], callback);
         }
         
     },
-
-    // Liittymispyyntö ryhmään
-    listGroups: async function(token, callback){
+    // Poista käyttäjän liittymispyyntö
+    denyFromGroup: async function (user, group, callback) {
+        if(user === 'undefined' || user ==''){
+            const error = {error: 'User not found'};
+            callback(error);
+        }
+        else{
+            DB.query('delete from user_groups where iduser = $1 and idgroup = $2;', [user, group], callback);
+        }
+        
+    },
+    // Listaa ryhmät ja kirjautuneen käyttäjän liittymisen status
+    listGroups: async function (token, callback) {
         let tokenData = await parseJwt(token);
-        let username = tokenData.username; 
+        let username = tokenData.username;
         DB.query('select groups.idgroup, groups.description, groups.name, (select count(user_groups.idusergroup) from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isMember, (select user_groups.accepted from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isAccepted from groups;', [username], callback);
-        //const error = {error: 'Function not yet implemented', gropRequested: groupData.group};
-        //callback(error);
     },
 
     // Hae kaikki ryhmät

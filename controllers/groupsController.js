@@ -7,7 +7,7 @@ router.use(express.json());
 
 
 // Haetaan kaikki 
-router.get('/', function (request, response) {
+router.get('/All/', function (request, response) {
     Group.getAll(function (err, dbResult) {
         if (err) {
             response.json(err);
@@ -25,8 +25,8 @@ router.get('/All/:token', function (request, response) {
         if (err) {
             response.json(err);
         } else {
-            //console.log(dbResult.rows);
-            //console.log("getByToken");
+            console.log(dbResult.rows);
+            console.log("getByToken");
             response.status(200).json(dbResult.rows);
         }
     });
@@ -40,9 +40,11 @@ router.post('/requestGroupMembership/', function (request, response) {
             console.log(err.error);
         } else {
             console.log(dbResult);
-            //console.log("add");
             if(dbResult.rowCount > 0){
                 response.status(200).json({message: 'Ryhmään liittyminen onnistui'});
+            } else {
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
             }
             
         }
@@ -86,10 +88,11 @@ router.post('/', function (request, response) {
                 console.log(err.error);
             }
         } else {
-            //console.log(dbResult);
-            //console.log("add");
             if(dbResult.rowCount > 0){
                 response.status(200).json({message: 'Ryhmän lisäys onnistui!'});
+            } else {
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
             }
             
         }
@@ -114,7 +117,7 @@ router.put('/acceptToGroup/', function (request, response) {
 });
 
 // Poista ryhmä id:n perusteella
-router.delete('/:id', function (request, response) {
+router.delete('/deleteGroup/:id', function (request, response) {
     Group.delete(request.params.id, function (err, dbResult) {
         if (err) {
             response.json(err);
@@ -122,6 +125,26 @@ router.delete('/:id', function (request, response) {
             console.log(dbResult.rows);
             console.log("delete");
             response.json(dbResult.rows);
+        }
+    });
+});
+
+// Hylkää liittymispyyntö
+router.delete('/denyRequestToJoin/:user/:group', function (request, response) {
+    Group.denyFromGroup(request.params.user, request.params.group, function (err, dbResult) {
+        if (err) {
+            response.status(404).json({error: 'Jokin meni pieleen'}); 
+            console.log(err);
+        } else {
+            console.log(dbResult.rowCount);
+            if(dbResult.rowCount > 0){
+                response.status(200).json({message: "success"});
+            }
+            else{
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
+            
+            }
         }
     });
 });
