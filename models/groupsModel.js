@@ -14,28 +14,81 @@ async function checkGroupName(name){
 
 async function parseJwt (token) {
     //return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    if(token == ''){
+        return '';
+    }
     return jwtDecode(token);
 }
 
 const GROUPS = {
     // Lisää uusi ryhmä
     add: async function (groupData, callback) {
-        const nameIsAvailable = await checkGroupName(groupData.name);
-        if(nameIsAvailable){
-            const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
-            const result = await DB.query('INSERT INTO groups (name, description) values ($1,$2) RETURNING idgroup', [groupData.name, groupData.description]);
-            if(result.rowCount > 0){ //Rivin lisäys onnistui
-                //Lisätään käyttäjä ryhmään admin -oikeudella
-                DB.query('INSERT INTO user_groups (iduser, idgroup, accepted, isadmin) values ((select iduser from users where username like $1), $2, true, true)', [tokenData.username, result.rows[0].idgroup], callback);
-            } else {
-                const error = {error: 'Group name not available'};
+        if (groupData.name == '') {
+            const error = { error: 'Group name cannot be empty' };
+            callback(error);
+        }
+        else {
+            const nameIsAvailable = await checkGroupName(groupData.name);
+            if (nameIsAvailable) {
+                const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
+                if(tokenData != ''){
+                        const result = await DB.query('INSERT INTO groups (name, description) values ($1,$2) RETURNING idgroup', [groupData.name, groupData.description]);
+                    if (result.rowCount > 0) { //Rivin lisäys onnistui
+                        //Lisätään käyttäjä ryhmään admin -oikeudella
+                        DB.query('INSERT INTO user_groups (iduser, idgroup, accepted, isadmin) values ((select iduser from users where username like $1), $2, true, true)', [tokenData.username, result.rows[0].idgroup], callback);
+                    } else {
+                        const error = { error: 'Group name not available' };
+                        callback(error);
+                    }
+                }
+                else{
+                    const error = { error: 'User not found' };
+                    callback(error);
+                }
+            }
+            else {
+                const error = { error: 'Group name not available' };
                 callback(error);
             }
         }
-        else{
-            const error = {error: 'Group name not available'};
+    },
+    requestGroupMembership: async function (groupData, callback) {
+        if(groupData.token == ''){
+            const error = {error: 'User not found'};
             callback(error);
         }
+        else{
+            const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
+            const username = tokenData.username;
+            const groupId = groupData.group; 
+            console.log(groupData);
+            return DB.query('INSERT INTO user_groups (iduser, idgroup) values ((select iduser from users where username like $1), $2)', [username, groupId], callback);
+        }
+        
+    },
+    joinRequests: async function (token, callback) {
+        if(token == ''){
+            const error = {error: 'User not found'};
+            callback(error);
+        }
+        else{
+            const tokenData = await parseJwt(token); //puretaan tokenin payload luettavaan muotoon
+            const username = tokenData.username;
+            return DB.query('select groups.name as groupname, users.username, user_groups.iduser, user_groups.idgroup from user_groups join groups on user_groups.idgroup = groups.idgroup join users on user_groups.iduser = users.iduser where user_groups.idgroup in (select idgroup from user_groups where iduser = (select iduser from users where username like $1) and isadmin = true) and user_groups.accepted = false order by groups.name;', [username], callback);
+        }
+        
+    },
+    acceptToGroup: async function (groupData, callback) {
+        if(groupData === 'undefined'){
+            const error = {error: 'User not found'};
+            callback(error);
+        }
+        else{
+            const user = groupData.user;
+            const group = groupData.group;
+            return DB.query('update user_groups set accepted=true, joined_at=now() where iduser = $1 and idgroup = $2', [user, group], callback);
+        }
+        
     },
 
     // Liittymispyyntö ryhmään
