@@ -51,6 +51,29 @@ router.post('/requestGroupMembership/', function (request, response) {
     });
 });
 
+// Lisätään esitys ryhmän listalle
+router.post('/addToShowList/', function (request, response) {
+    Group.addToShowList(request.body, function (err, dbResult) {
+        if (err) {
+            if(err.error == 'Show is already in the list'){
+                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+            } else {
+                response.status(404).json({ error: 'Jokin meni pieleen' });
+                console.log(err.error);
+            }
+        } else {
+            console.log(dbResult);
+            if(dbResult.rowCount > 0){
+                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+            } else {
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
+            }
+            
+        }
+    });
+});
+
 // Heataan käyttäjälle lähetetyt ryhmään pääsy pyynnöt
 router.get('/joinRequests/:token', function (request, response) {
     Group.joinRequests(request.params.token, function (err, dbResult) {
