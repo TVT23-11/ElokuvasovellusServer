@@ -109,7 +109,52 @@ const GROUPS = {
         let username = tokenData.username;
         DB.query('select groups.idgroup, groups.description, groups.name, (select count(user_groups.idusergroup) from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isMember, (select user_groups.accepted from user_groups where groups.idgroup = user_groups.idgroup and user_groups.iduser = (select iduser from users where username like $1)) as isAccepted from groups;', [username], callback);
     },
+    // Listaa ryhmät ja kirjautuneen käyttäjän liittymisen status
+    groupDetails: async function (id, token, callback) {
+        let error = '';
+        let tokenData = await parseJwt(token);
+        let username = tokenData.username;
 
+        let group = await DB.query('select idgroup, name as groupname, description from groups where idgroup = $1;', [id]);
+        if(group.rowCount < 1){
+            error = 'Group not found';
+        }
+        let groupMovieList = await DB.query('select name, idgrouplist as id from groups_lists where idgroup = $1;', [id]);
+ 
+        //Ryhmän esityksille täytyy tehdä kantaan taulu
+        //let groupShowList = DB.query('select * from groups_shows where idgroup = $1', [id]);
+
+        let groupMembers = await DB.query('select iduser as id, username from users where iduser in (select iduser from user_groups where idgroup = $1) order by username;', [id]);
+
+        let isAdmin = await DB.query('select count(idgroup) as admin from user_groups where isadmin = true and iduser = (select iduser from users where username like $1) and idgroup = $2', [username, id]);
+
+        let user = await DB.query('select iduser from users where username like $1', [username]);
+
+        let data = {
+            id: group.rows[0].idgroup,
+            groupname: group.rows[0].groupname,
+            description: group.rows[0].description,
+            groupMovieList: groupMovieList.rows,
+            groupShowList: [],
+            groupMembers: groupMembers.rows,
+            admin: isAdmin.rows[0].admin,
+            user: user.rows[0].iduser
+        };
+        if(error == ''){
+            callback(false, data);
+        } else {
+            callback({error: error});
+        }
+        
+    },
+    // Heataan ne ryhmät, joihin käyttäjä on ylläpitäjä
+    isAdminToGroups: async function (token, callback) {
+        let tokenData = await parseJwt(token);
+        let username = tokenData.username;
+        console.log(username);
+        DB.query('select idgroup as id, name from groups where idgroup in (select idgroup from user_groups where iduser in (select iduser from users where username like $1) and isadmin = true);', [username], callback);
+        
+    },
     // Hae kaikki ryhmät
     getAll: function (callback) {
         DB.query('SELECT * FROM groups', callback);

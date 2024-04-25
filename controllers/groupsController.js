@@ -76,7 +76,32 @@ router.get('/name/:name', function (request, response) {
         }
     });
 });
-
+// Heataan tiedot Ryhmän omalle sivulle
+router.get('/groupDetails/:id/:token', function (request, response) {
+    Group.groupDetails(request.params.id, request.params.token, function (err, dbResult) {
+        if (err) {
+            response.status(404).json({ error: 'Jokin meni pieleen' });
+            console.log(err.error);
+        } else {
+            console.log(dbResult);
+            console.log("groupDetails");
+            response.status(200).json(dbResult);
+        }
+    });
+});
+// Heataan ne ryhmät, joihin käyttäjä on ylläpitäjä
+router.get('/isAdmin/:token', function (request, response) {
+    Group.isAdminToGroups(request.params.token, function (err, dbResult) {
+        if (err) {
+            response.status(404).json({ error: 'Jokin meni pieleen' });
+            console.log(err);
+        } else {
+            console.log(dbResult.rows);
+            console.log("isAdminToGroups");
+            response.status(200).json(dbResult.rows);
+        }
+    });
+});
 //Lisää uusi ryhmä
 router.post('/', function (request, response) {
     Group.add(request.body, function (err, dbResult) {
@@ -120,11 +145,17 @@ router.put('/acceptToGroup/', function (request, response) {
 router.delete('/deleteGroup/:id', function (request, response) {
     Group.delete(request.params.id, function (err, dbResult) {
         if (err) {
-            response.json(err);
+            response.status(404).json({error: 'Jokin meni pieleen'}); 
+            console.log(err);
         } else {
-            console.log(dbResult.rows);
-            console.log("delete");
-            response.json(dbResult.rows);
+            console.log(dbResult.rowCount);
+            if(dbResult.rowCount > 0){
+                response.status(200).json({message: "success"});
+            }
+            else{
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
+            }
         }
     });
 });
