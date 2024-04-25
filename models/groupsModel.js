@@ -56,14 +56,26 @@ const GROUPS = {
         if(groupData.token == ''){
             const error = {error: 'User not found'};
             callback(error);
-        }
-        else{
+        } else{
             const tokenData = await parseJwt(groupData.token); //puretaan tokenin payload luettavaan muotoon
             const username = tokenData.username;
             const groupId = groupData.group; 
             console.log(groupData);
             DB.query('INSERT INTO user_groups (iduser, idgroup) values ((select iduser from users where username like $1), $2)', [username, groupId], callback);
         }
+        
+    },
+    // Pyydä ryhmäänpääsyä
+    addToShowList: async function (groupData, callback) {
+        let result = await DB.query('select * from groups_shows where idgroup = $1 and theater like $2 and showtime like $3 and movieid = $4;',[groupData.group, groupData.theater, groupData.showtime, groupData.movieid]);
+        if(result.rowCount > 0){
+            const error = {error: 'Show is already in the list'};
+            console.log(error);
+            callback(error);
+        } else {
+            console.log('INSERT INTO groups_shows (idgroup, theater, showtime, moviename, movieid, poster) values ($1, $2, $3, $4, $5, $6);', [groupData.group, groupData.theater, groupData.showtime, groupData.moviename, groupData.movieid, groupData.poster]);
+            DB.query('INSERT INTO groups_shows (idgroup, theater, showtime, moviename, movieid, poster) values ($1, $2, $3, $4, $5, $6);', [groupData.group, groupData.theater, groupData.showtime, groupData.moviename, groupData.movieid, groupData.poster], callback);
+        };
         
     },
     // Hae käyttäjän hallinnoimien ryhmien liittymispyynnöt hyväksyttäväksi
@@ -122,7 +134,8 @@ const GROUPS = {
         let groupMovieList = await DB.query('select name, idgrouplist as id from groups_lists where idgroup = $1;', [id]);
  
         //Ryhmän esityksille täytyy tehdä kantaan taulu
-        //let groupShowList = DB.query('select * from groups_shows where idgroup = $1', [id]);
+        let groupShowList = await DB.query('select * from groups_shows where idgroup = $1', [id]);
+        console.log(groupShowList);
 
         let groupMembers = await DB.query('select iduser as id, username from users where iduser in (select iduser from user_groups where idgroup = $1) order by username;', [id]);
 
@@ -135,7 +148,7 @@ const GROUPS = {
             groupname: group.rows[0].groupname,
             description: group.rows[0].description,
             groupMovieList: groupMovieList.rows,
-            groupShowList: [],
+            groupShowList: groupShowList.rows,
             groupMembers: groupMembers.rows,
             admin: isAdmin.rows[0].admin,
             user: user.rows[0].iduser
