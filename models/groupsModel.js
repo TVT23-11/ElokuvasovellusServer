@@ -65,7 +65,20 @@ const GROUPS = {
         }
         
     },
-    // Pyydä ryhmäänpääsyä
+    // Lisätään elokuva ryhmän elokuvalistalle
+    addToMovieList: async function (groupData, callback) {
+        let result = await DB.query('select * from groups_lists where idgroup = $1 and movieid = $2;',[groupData.group, groupData.movieid]);
+        if(result.rowCount > 0){
+            const error = {error: 'Show is already in the list'};
+            console.log(error);
+            callback(error);
+        } else {
+            console.log('INSERT INTO groups_lists (idgroup, moviename, movieid, poster) values ($1, $2, $3, $4);', [groupData.group, groupData.moviename, groupData.movieid, groupData.poster]);
+            DB.query('INSERT INTO groups_lists (idgroup, moviename, movieid, poster) values ($1, $2, $3, $4);', [groupData.group, groupData.moviename, groupData.movieid, groupData.poster], callback);
+        };
+        
+    },
+    // Lisätään esitys ryhmän esityslistalle
     addToShowList: async function (groupData, callback) {
         let result = await DB.query('select * from groups_shows where idgroup = $1 and theater like $2 and showtime like $3 and movieid = $4;',[groupData.group, groupData.theater, groupData.showtime, groupData.movieid]);
         if(result.rowCount > 0){
@@ -131,7 +144,7 @@ const GROUPS = {
         if(group.rowCount < 1){
             error = 'Group not found';
         }
-        let groupMovieList = await DB.query('select name, idgrouplist as id from groups_lists where idgroup = $1;', [id]);
+        let groupMovieList = await DB.query('select * from groups_lists where idgroup = $1', [id]);
  
         //Ryhmän esityksille täytyy tehdä kantaan taulu
         let groupShowList = await DB.query('select * from groups_shows where idgroup = $1', [id]);
