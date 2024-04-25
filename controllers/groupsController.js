@@ -51,7 +51,7 @@ router.post('/requestGroupMembership/', function (request, response) {
     });
 });
 
-// Lisätään esitys ryhmän listalle
+// Lisätään esitys ryhmän esityslistalle
 router.post('/addToShowList/', function (request, response) {
     Group.addToShowList(request.body, function (err, dbResult) {
         if (err) {
@@ -60,6 +60,29 @@ router.post('/addToShowList/', function (request, response) {
             } else {
                 response.status(404).json({ error: 'Jokin meni pieleen' });
                 console.log(err.error);
+            }
+        } else {
+            console.log(dbResult);
+            if(dbResult.rowCount > 0){
+                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+            } else {
+                response.status(404).json({error: 'Jokin meni pieleen'});  
+                console.log(dbResult);
+            }
+            
+        }
+    });
+});
+
+// Lisätään elokuva ryhmän elokuvalistalle
+router.post('/addToMovieList/', function (request, response) {
+    Group.addToMovieList(request.body, function (err, dbResult) {
+        if (err) {
+            if(err.error == 'Show is already in the list'){
+                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+            } else {
+                response.status(404).json({ error: 'Jokin meni pieleen' });
+                console.log(err);
             }
         } else {
             console.log(dbResult);
