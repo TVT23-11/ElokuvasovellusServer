@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
 const { jwtDecode } = require('jwt-decode');
 
-async function parseJwt (token) {
+async function parseJwt(token) {
     return jwtDecode(token);
 }
 
@@ -101,24 +101,61 @@ Router.get('/checkEmail',
         });
     });
 
-    // Käyttäjätilin poisto
+// Käyttäjätilin poisto
 Router.delete('/',
- async function (request, response)
-  { console.log('delete');
-    let tokendata = await parseJwt(request.query.id);
-    let username = tokendata.username;
-    User.deleteUser(username, function (err, dbResult) {
-        if (err) {
-            response.json(err);
-        } else {
-            if (dbResult.rowCount > 0) {
-                response.status(200).json('Käyttäjätili poistettiin onnistuneesti');
+    async function (request, response) {
+        console.log('delete');
+        let tokendata = await parseJwt(request.query.id);
+        let username = tokendata.username;
+        User.deleteUser(username, function (err, dbResult) {
+            if (err) {
+                response.json(err);
             } else {
-                response.status(404).json('Käyttäjätiliä ei löytynyt');
+                if (dbResult.rowCount > 0) {
+                    response.status(200).json('Käyttäjätili poistettiin onnistuneesti');
+                } else {
+                    response.status(404).json('Käyttäjätiliä ei löytynyt');
+                }
             }
-        }
+        });
     });
+
+//Sähköpostin vaihto 
+Router.put('/changeEmail', async function (request, response) {
+    try {
+        let tokendata = await parseJwt(request.query.id);
+        console.log('Tokendata:', tokendata);
+        let newEmail = request.query.newEmail; // Saadaan uusi sähköposti 
+        console.log('newEmail:', newEmail);
+        //Tarkastetaan onko uusi sähköposti jo käytössä
+        User.isEmailAvailable(newEmail, async function (err, dbResult) {
+            if (err) {
+                response.json(err);
+            } else {
+                if (dbResult.rows.length > 0) {
+                    response.status(400).json('Uusi sähköposti on jo käytössä');
+                } else {
+
+                    let username = tokendata.username;
+                    console.log('Username:', username);
+
+                    User.updateEmail(username, newEmail, function (err, dbResult) {
+                        if (err) {
+                            response.json(err);
+                        } else {
+                            response.status(200).json('Sähköposti vaihdettu onnistuneesti');
+                            console.log(dbResult);
+                        }
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        response.status(401).json({ error: 'oot huono' });
+    }
 });
+
+
 
 function generateAccessToken(username) {
     return jwt.sign(username, process.env.JWT_SECRET_KEY, { expiresIn: '1800s' });

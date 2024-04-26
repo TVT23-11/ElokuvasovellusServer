@@ -44,12 +44,15 @@ const User = {
    // Poista käyttäjä kaikista tauluista, joissa on iduser-kenttä
   deleteUser: async function (username, callback) {
     console.log(username);
-    
-    // DELETE FROM favorites WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);  DELETE FROM reviews WHERE iduser IN (SELECT iduser FROM users WHERE username like $1); DELETE FROM user_groups WHERE iduser IN (SELECT iduser FROM users WHERE username like $1)', [username], callback);
      let result= await DB.query('DELETE FROM favorites WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);' , [username]);
      result = await DB.query(' DELETE FROM reviews WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);', [username]) ;  
      result = await DB.query(' DELETE FROM user_groups WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);', [username]) ; 
      return DB.query('DELETE FROM users WHERE username like $1;' , [username], callback);                       
+  },
+
+// Käyttäjän sähköposti osoitteen päivitys
+  updateEmail: function (username, newEmail, callback) {
+    DB.query('UPDATE users SET email = $1 WHERE username like $2', [newEmail, username], callback);
   }
 };
 
