@@ -1,5 +1,13 @@
 const DB = require('../database/pg_connection');
 const bcrypt = require('bcrypt');
+const { jwtDecode } = require('jwt-decode');
+
+async function parseJwt (token) {
+  if(token == ''){
+      return '';
+  }
+  return jwtDecode(token);
+}
 
 const User = {
   add: function (newUser, callback) {
@@ -27,6 +35,12 @@ const User = {
       callback
     );
 
+  },
+  getUsername: async function (token){
+    const tokenData = await parseJwt(token);
+    const username = {username: tokenData.username};
+
+    return (username);
   },
   checkPassword: function (user, callback) {
     return DB.query('select password from users where username like $1', [user], callback);
