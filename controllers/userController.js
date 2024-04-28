@@ -84,6 +84,20 @@ Router.get('/checkUsername',
         });
     });
 
+Router.get('/getUsername',
+    async function (request, response){
+        if (request.query.token != '') {
+            const result = await User.getUsername(request.query.token);
+            console.log(result);
+            if (result.username.length > 1) {
+                response.status(200).json(result);
+            }
+        } else {
+            response.status(404).json({error: 'user not found'});
+        }
+        
+    });
+
 //Tarkistaa, onko sähköpostilla jo luotu tili
 Router.get('/checkEmail',
     function (request, response) {
