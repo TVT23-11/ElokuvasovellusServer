@@ -3,10 +3,10 @@ const bcrypt = require('bcrypt');
 const { jwtDecode } = require('jwt-decode');
 
 async function parseJwt (token) {
-  if(token == ''){
+  if(token == '' || token === 'undefined'){
       return '';
   }
-  return jwtDecode(token);
+  return await jwtDecode(token);
 }
 
 const User = {
@@ -16,19 +16,7 @@ const User = {
     let iterations = 10;
     var salt = bcrypt.genSaltSync(iterations);
     var password = bcrypt.hashSync(newUser.password, salt);
-
-    /*
-    Kirjautumisen validointi:
-
-    if(bcrypt.compareSync("Käyttäjän antama salasana tulee tähän", password)){
-      console.log('ok');
-    }
-    else{
-      console.log('ei ok');
-    }
-
-    */
-    
+   
     return DB.query(
       'insert into users (username, email, password, salt, iterations) values($1, $2, $3, $4, $5)',
       [newUser.username, newUser.email, password, salt, iterations],
@@ -39,7 +27,6 @@ const User = {
   getUsername: async function (token){
     const tokenData = await parseJwt(token);
     const username = {username: tokenData.username};
-
     return (username);
   },
   checkPassword: function (user, callback) {
@@ -52,12 +39,10 @@ const User = {
     return DB.query('select * from users where email like $1', [email], callback);
   },
   getAll: function(callback) {
-    console.log('users here');
     return('getAll');
   },
    // Poista käyttäjä kaikista tauluista, joissa on iduser-kenttä
   deleteUser: async function (username, callback) {
-    console.log(username);
      let result= await DB.query('DELETE FROM favorites WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);' , [username]);
      result = await DB.query(' DELETE FROM reviews WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);', [username]) ;  
      result = await DB.query(' DELETE FROM user_groups WHERE iduser IN (SELECT iduser FROM users WHERE username like $1);', [username]) ; 
