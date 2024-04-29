@@ -34,17 +34,14 @@ Router.post('/login',
             User.checkPassword(user, function (err, dbResult) {
                 if (err) {
                     response.json(err);
-                } else {
-                    console.log(dbResult.rows[0].password);
-                    if (dbResult.rowCount > 0) {    // Käyttäjätili löytyi                       
+                } else {  
+                    if (dbResult.rowCount > 0) {    // Käyttäjätili löytyi   
                         bcrypt.compare(pass, dbResult.rows[0].password, async function (err, compareResult) {
                             if (err) {
                                 console.log(err);
                                 json.status(404).json({ error: err });
                             } else {
                                 if (compareResult) {
-                                    console.log("succes");
-                                    //const token = generateAccessToken({ username: user });
                                     const token = await jwt.sign({ username: user }, process.env.JWT_SECRET_KEY);
                                     response.status(200).json({ jwtToken: token });
                                 } else {
@@ -56,7 +53,7 @@ Router.post('/login',
                     } else {
                         console.log('Käyttäjätunnusta ei löytynyt tietokannasta');
                         response.status(401).json({ error: 'wrong password' });
-                    }
+                    }   
                 }
             });
         } else {
@@ -69,7 +66,6 @@ Router.post('/login',
 // Tarkistaa, onko käyttäjätunnus varattu
 Router.get('/checkUsername',
     function (request, response) {
-        console.log("checking username " + request.query.username);
         User.isUsernameAvailable(request.query.username, function (err, dbResult) {
             if (err) {
                 response.json(err);
@@ -86,14 +82,19 @@ Router.get('/checkUsername',
 
 Router.get('/getUsername',
     async function (request, response){
-        if (request.query.token != '') {
+        console.log("get username: " + request.query.token );
+        if (request.query.token != '' && request.query.token !== 'undefined') {
             const result = await User.getUsername(request.query.token);
-            console.log(result);
-            if (result.username.length > 1) {
+            console.log(result );
+            if (result.username) {
                 response.status(200).json(result);
+            }
+            else {
+                response.status(404).json({error: 'user not found'});
             }
         } else {
             response.status(404).json({error: 'user not found'});
+            console.log('user not found');
         }
         
     });
@@ -138,9 +139,7 @@ Router.delete('/',
 Router.put('/changeEmail', async function (request, response) {
     try {
         let tokendata = await parseJwt(request.query.id);
-        console.log('Tokendata:', tokendata);
         let newEmail = request.query.newEmail; // Saadaan uusi sähköposti 
-        console.log('newEmail:', newEmail);
         //Tarkastetaan onko uusi sähköposti jo käytössä
         User.isEmailAvailable(newEmail, async function (err, dbResult) {
             if (err) {
