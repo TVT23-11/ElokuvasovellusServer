@@ -6,6 +6,7 @@ const TMDB_router = require('./controllers/TMDBController');
 const User_router = require('./controllers/userController');
 const Groups_router = require('./controllers/groupsController');
 const Favorites_router = require('./controllers/favoritesController');
+const Review_router = require('./controllers/reviewController');
 
 const App=express();
 App.use(express.json());
@@ -18,6 +19,7 @@ App.use('/TMDB', TMDB_router);
 App.use('/user', User_router);
 App.use('/groups', Groups_router);
 App.use('/favorites', Favorites_router);
+App.use('/review', Review_router);
 
 App.use(authenticateToken);
 
