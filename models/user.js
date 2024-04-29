@@ -29,6 +29,12 @@ const User = {
     const username = {username: tokenData.username};
     return (username);
   },
+  getEmail: async function (token){
+    const tokenData = await parseJwt(token);
+    const username = tokenData.username;
+    const result = await DB.query('select email from users where username like $1', [username]);
+    return (result.rows[0]);
+  },
   checkPassword: function (user, callback) {
     return DB.query('select password from users where username like $1', [user], callback);
   },
