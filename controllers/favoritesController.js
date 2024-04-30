@@ -55,5 +55,20 @@ router.delete('/deleteFavorite/:token/:movie', function (request, response) {
         }
     });
 });
+// Luo jakamislinkki suosikkilistalle
+router.get('/getfavoritelist/:iduser', async (req, res) => {
+    try {
+        const favoriteList = await Favorites.getFavoriteList(req.params.iduser);
+        if(favoriteList.error){
+            res.status(404).json(favoriteList.error);
+        }else{
+            console.log(favoriteList);
+            res.status(200).json(favoriteList);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 module.exports = router;
