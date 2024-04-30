@@ -97,6 +97,23 @@ Router.get('/getUsername',
         
     });
 
+    Router.get('/getUserId',
+    async function (request, response){
+        if (request.query.token != '' && request.query.token !== 'undefined') {
+            const result = await User.getUserId(request.query.token);
+            if (result.iduser) {
+                response.status(200).json(result);
+            }
+            else {
+                response.status(404).json({error: 'user not found'});
+            }
+        } else {
+            response.status(404).json({error: 'user not found'});
+            console.log('user not found');
+        }
+        
+    });
+
 Router.get('/getEmail/',
     async function (request, response) {
         if (request.query.token != '' && request.query.token !== 'undefined') {
