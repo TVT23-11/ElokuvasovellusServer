@@ -10,11 +10,11 @@ router.use(express.json());
 router.get('/All/', function (request, response) {
     Group.getAll(function (err, dbResult) {
         if (err) {
-            response.json(err);
+            console.log(err);
+            response.status(500).json({error:'jotain meni pieleen'});
         } else {
             console.log(dbResult.rows);
-            console.log("getAll");
-            response.json(dbResult.rows);
+            response.status(200).json(dbResult.rows);
         }
     });
 });
@@ -23,10 +23,10 @@ router.get('/All/', function (request, response) {
 router.get('/All/:token', function (request, response) {
     Group.listGroups(request.params.token, function (err, dbResult) {
         if (err) {
-            response.json(err);
+            console.log(err);
+            response.status(500).json({error:'jotain meni pieleen'});
         } else {
             console.log(dbResult.rows);
-            console.log("getByToken");
             response.status(200).json(dbResult.rows);
         }
     });
@@ -79,7 +79,7 @@ router.post('/addToMovieList/', function (request, response) {
     Group.addToMovieList(request.body, function (err, dbResult) {
         if (err) {
             if(err.error == 'Show is already in the list'){
-                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+                response.status(200).json({message: 'Elokuva lisätty ryhmän listalle'});
             } else {
                 response.status(404).json({ error: 'Jokin meni pieleen' });
                 console.log(err);
@@ -87,7 +87,7 @@ router.post('/addToMovieList/', function (request, response) {
         } else {
             console.log(dbResult);
             if(dbResult.rowCount > 0){
-                response.status(200).json({message: 'Esitys lisätty ryhmän listalle'});
+                response.status(200).json({message: 'Elokuva lisätty ryhmän listalle'});
             } else {
                 response.status(404).json({error: 'Jokin meni pieleen'});  
                 console.log(dbResult);
@@ -101,11 +101,11 @@ router.post('/addToMovieList/', function (request, response) {
 router.get('/joinRequests/:token', function (request, response) {
     Group.joinRequests(request.params.token, function (err, dbResult) {
         if (err) {
-            response.json(err);
+            response.statusMessage(500).json(err);
         } else {
             console.log(dbResult.rows);
-            console.log("joinRequests");
-            response.json(dbResult.rows);
+            //console.log("joinRequests");
+            response.status(200).json(dbResult.rows);
         }
     });
 });
