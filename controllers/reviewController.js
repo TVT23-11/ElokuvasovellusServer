@@ -10,7 +10,8 @@ router.use(express.json());
 router.get('/', function (request, response) {
     Review.getAll(function (err, dbResult) {
         if (err) {
-            response.json(err);
+            console.log(err);
+            response.status(500).json({error: "Jokin meni pieleen"});
         } else {
             console.log(dbResult.rows);
             console.log("getAll");

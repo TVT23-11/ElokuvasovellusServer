@@ -9,10 +9,9 @@ router.use(express.json());
 router.get('/:token', function (request, response) {
     Favorites.getAll(request.params.token, function (err, dbResult) {
         if (err) {
-            response.json(err);
+            console.log(err);
+            response.status(404).json({error: 'Jokin meni pieleen'});
         } else {
-            console.log(dbResult.rows);
-            console.log("getAll");
             response.status(200).json(dbResult.rows);
         }
     });
@@ -38,7 +37,6 @@ router.post('/addFavorite/', function (request, response) {
 
 // Poista suosikki
 router.delete('/deleteFavorite/:token/:movie', function (request, response) {
-    console.log(request.query.token);
     Favorites.delete(request.params.token, request.params.movie, function (err, dbResult) {
         if (err) {
             response.status(404).json({error: 'Jokin meni pieleen'}); 
@@ -60,7 +58,8 @@ router.get('/getfavoritelist/:iduser', async (req, res) => {
     try {
         const favoriteList = await Favorites.getFavoriteList(req.params.iduser);
         if(favoriteList.error){
-            res.status(404).json(favoriteList.error);
+            console.log(favoriteList.error);
+            res.status(404).json({error: 'Jokin meni pieleen'});
         }else{
             console.log(favoriteList);
             res.status(200).json(favoriteList);
