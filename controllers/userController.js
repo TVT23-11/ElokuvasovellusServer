@@ -14,15 +14,26 @@ async function parseJwt(token) {
 // Uuden käyttäjän lisäys
 Router.post('/register',
     async function (request, response) {
-        User.add(request.body, function (err, dbResult) {
-            if (err) {
-                response.json(err);
-                console.log(err);
-            } else {
-                response.status(200).json("ok");
-                response.end();
-            }
-        });
+        if (request.body) {
+            User.add(request.body, function (err, dbResult) {
+                if (err) {                 
+                    if(err.constraint == 'users_username_key'){
+                        response.status(401).json({ error: 'username not avaialbe' });
+                    } else if(err.error){
+                        response.status(401).json({ error: err.error });
+                    } else {
+                        console.log(err);
+                        response.status(404).json({ error: 'jotain meni pieleen' });
+                    }
+
+                } else {
+                    response.status(200).json("ok");
+                }
+            });
+        } else {
+            response.status(401).json({ error: 'incomplete user data' });
+        }
+        
     });
 
 Router.post('/login',
@@ -52,7 +63,7 @@ Router.post('/login',
                         });
                     } else {
                         console.log('Käyttäjätunnusta ei löytynyt tietokannasta');
-                        response.status(401).json({ error: 'wrong password' });
+                        response.status(404).json({ error: 'wrong password' });
                     }   
                 }
             });
@@ -66,23 +77,29 @@ Router.post('/login',
 // Tarkistaa, onko käyttäjätunnus varattu
 Router.get('/checkUsername',
     function (request, response) {
-        User.isUsernameAvailable(request.query.username, function (err, dbResult) {
+        if(request.query.username){
+            User.isUsernameAvailable(request.query.username, function (err, dbResult) {
             if (err) {
                 response.json(err);
             } else {
                 if (dbResult.rows.length > 0) {
-                    response.json('not available');
+                    response.status(401).json('not available');
                 } else {
-                    response.json('available');
+                    response.status(200).json('available');
                 }
 
             }
         });
+        } else {
+            response.status(404).json({error: 'data not found'});
+        }
+
+        
     });
 
 Router.get('/getUsername',
     async function (request, response){
-        if (request.query.token != '' && request.query.token !== 'undefined') {
+        if (request.query.token && request.query.token != '' && request.query.token !== 'undefined') {
             const result = await User.getUsername(request.query.token);
             if (result.username) {
                 response.status(200).json(result);
@@ -99,7 +116,7 @@ Router.get('/getUsername',
 
     Router.get('/getUserId',
     async function (request, response){
-        if (request.query.token != '' && request.query.token !== 'undefined') {
+        if (request.query.token && request.query.token != '' && request.query.token !== 'undefined') {
             const result = await User.getUserId(request.query.token);
             if (result.iduser) {
                 response.status(200).json(result);
@@ -116,7 +133,7 @@ Router.get('/getUsername',
 
 Router.get('/getEmail/',
     async function (request, response) {
-        if (request.query.token != '' && request.query.token !== 'undefined') {
+        if (request.query.token && request.query.token != '' && request.query.token !== 'undefined') {
             const result = await User.getEmail(request.query.token);
             if (result.email) {
                 response.status(200).json(result);
@@ -135,68 +152,85 @@ Router.get('/getEmail/',
 //Tarkistaa, onko sähköpostilla jo luotu tili
 Router.get('/checkEmail',
     function (request, response) {
-        User.isEmailAvailable(request.query.email, function (err, dbResult) {
-            if (err) {
-                response.json(err);
-            } else {
-                if (dbResult.rows.length > 0) {
-                    response.json('not available');
+        if (request.query.email) {
+            User.isEmailAvailable(request.query.email, function (err, dbResult) {
+                if (err) {
+                    response.status(404).json(err);
                 } else {
-                    response.json('available');
-                }
+                    if (dbResult.rows.length > 0) {
+                        response.status(401).json('not available');
+                    } else {
+                        response.status(200).json('available');
+                    }
 
-            }
-        });
+                }
+            });
+        } else {
+            response.status(404).json({error: 'data not found'});
+        }
+        
     });
 
 // Käyttäjätilin poisto
 Router.delete('/',
     async function (request, response) {
-        console.log('delete');
-        let tokendata = await parseJwt(request.query.id);
-        let username = tokendata.username;
-        User.deleteUser(username, function (err, dbResult) {
-            if (err) {
-                response.json(err);
-            } else {
-                if (dbResult.rowCount > 0) {
-                    response.status(200).json('Käyttäjätili poistettiin onnistuneesti');
+        if(request.query.id){
+            let tokendata = await parseJwt(request.query.id);
+            let username = tokendata.username;
+            User.deleteUser(username, function (err, dbResult) {
+                if (err) {
+                    response.json(err);
                 } else {
-                    response.status(404).json('Käyttäjätiliä ei löytynyt');
+                    if (dbResult.rowCount > 0) {
+                        response.status(200).json('Käyttäjätili poistettiin onnistuneesti');
+                    } else {
+                        response.status(404).json('Käyttäjätiliä ei löytynyt');
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            response.status(404).json('Käyttäjätiliä ei löytynyt');
+        }
+        
     });
 
 //Sähköpostin vaihto 
 Router.put('/changeEmail', async function (request, response) {
     try {
-        let tokendata = await parseJwt(request.query.id);
-        let newEmail = request.query.newEmail; // Saadaan uusi sähköposti 
-        //Tarkastetaan onko uusi sähköposti jo käytössä
-        User.isEmailAvailable(newEmail, async function (err, dbResult) {
-            if (err) {
-                response.json(err);
-            } else {
-                if (dbResult.rows.length > 0) {
-                    response.status(400).json('Uusi sähköposti on jo käytössä');
+        if(request.query.id && request.query.newEmail){
+            let tokendata = await parseJwt(request.query.id);
+            let newEmail = request.query.newEmail; // Saadaan uusi sähköposti 
+            //Tarkastetaan onko uusi sähköposti jo käytössä
+            User.isEmailAvailable(newEmail, async function (err, dbResult) {
+                if (err) {
+                    console.log(err);
+                    response.status(401).json(err);
                 } else {
+                    if (dbResult.rows.length > 0) {
+                        
+                    //console.log('Uusi sähköposti on jo käytössä');
+                        response.status(401).json('Uusi sähköposti on jo käytössä');
+                    } else {
 
-                    let username = tokendata.username;
-                    console.log('Username:', username);
+                        let username = tokendata.username;
 
-                    User.updateEmail(username, newEmail, function (err, dbResult) {
-                        if (err) {
-                            response.json(err);
-                        } else {
-                            response.status(200).json('Sähköposti vaihdettu onnistuneesti');
-                            console.log(dbResult);
-                        }
-                    });
+                        User.updateEmail(username, newEmail, function (err, dbResult) {
+                            if (err) {
+                                response.json(err);
+                            } else {
+                                response.status(200).json('Sähköposti vaihdettu onnistuneesti');
+                                //console.log(dbResult);
+                            }
+                        });
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            response.status(404).json({error: 'incomplete data'});
+        }
+        
     } catch (error) {
+        console.log('oot huono');
         response.status(401).json({ error: 'oot huono' });
     }
 });

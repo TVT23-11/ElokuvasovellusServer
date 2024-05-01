@@ -11,18 +11,16 @@ async function parseJwt (token) {
 
 const User = {
   add: function (newUser, callback) {
-    
-    var bcrypt = require('bcrypt');
-    let iterations = 10;
-    var salt = bcrypt.genSaltSync(iterations);
-    var password = bcrypt.hashSync(newUser.password, salt);
-   
-    return DB.query(
-      'insert into users (username, email, password, salt, iterations) values($1, $2, $3, $4, $5)',
-      [newUser.username, newUser.email, password, salt, iterations],
-      callback
-    );
+    if (!newUser.username || !newUser.password || !newUser.email) {
+      callback({ error: 'incomplete user data' });
+    } else {
+      var bcrypt = require('bcrypt');
+      let iterations = 10;
+      var salt = bcrypt.genSaltSync(iterations);
+      var password = bcrypt.hashSync(newUser.password, salt);
 
+      DB.query('insert into users (username, email, password, salt, iterations) values($1, $2, $3, $4, $5)', [newUser.username, newUser.email, password, salt, iterations], callback);
+    }
   },
   getUsername: async function (token){
     const tokenData = await parseJwt(token);
