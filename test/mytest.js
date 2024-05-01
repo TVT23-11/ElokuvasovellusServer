@@ -4,7 +4,7 @@ let server = require('../app');
 chai.use(chaiHttp);
 
 
-var user = {token: '', id: 0, name: '', email: ''};
+var user = {token: '', id: 0, name: 'TestaajanUseri', email: 'testaajanMaili@testi.fi'};
 
 describe('Create user', () => {
     //Success
@@ -111,7 +111,7 @@ describe('Login testit', () => {
     it('Should fail to get login token (wrong username)', (done) => {
         chai.request(server)
             .post('/user/login')
-            .send({username: 'Admina', password: 'asd'})
+            .send({username: 'TestaajanUse', password: '1234'})
             .end((err, res) => {
                 chai.expect(res).to.have.status(404).and.to.be.json;
                 chai.expect(res.body).have.property('error').with.equal('wrong password');
@@ -121,7 +121,7 @@ describe('Login testit', () => {
     it('Should fail to get login token (wrong password)', (done) => {
         chai.request(server)
             .post('/user/login')
-            .send({username: 'Admin', password: 'a'})
+            .send({username: 'TestaajanUseri', password: 'a'})
             .end((err, res) => {
                 chai.expect(res).to.have.status(401).and.to.be.json;
                 chai.expect(res.body).have.property('error').with.equal('wrong password');
@@ -219,7 +219,7 @@ describe('/GET getUsername', () =>{
 });
 describe('/GET getUserId', () => {
     //Success
-    it('Should get userId (1)', (done) => {
+    it('Should get userId (INT)', (done) => {
         chai.request(server)
         .get('/user/getUserid/?token='+user.token)
         .end((err, res) => {
@@ -288,7 +288,7 @@ describe('/GET getEmail', () => {
 });
 describe('/GET checkEmail',() =>{
     //Success
-    it(`Should get not available (${user.name}, ${user.email}) `, (done) => {
+    it('Should get not available ('+user.name+', '+user.email+') ', (done) => {
         chai.request(server)
             .get('/user/checkEmail?email='+user.email)
             .end((err, res) => {
