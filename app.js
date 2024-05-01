@@ -13,6 +13,7 @@ App.use(express.json());
 App.use(express.urlencoded({extended:false}));
 
 const cors = require('cors');
+App.use(express.static('public'));
 App.use(cors());
 
 App.use('/TMDB', TMDB_router);
