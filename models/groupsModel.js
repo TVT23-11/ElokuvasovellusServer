@@ -150,7 +150,7 @@ const GROUPS = {
         let groupShowList = await DB.query('select * from groups_shows where idgroup = $1', [id]);
         console.log(groupShowList);
 
-        let groupMembers = await DB.query('select iduser as id, username from users where iduser in (select iduser from user_groups where idgroup = $1) order by username;', [id]);
+        let groupMembers = await DB.query('select iduser as id, username from users where iduser in (select iduser from user_groups where idgroup = $1 and accpeted = true) order by username;', [id]);
 
         let isAdmin = await DB.query('select count(idgroup) as admin from user_groups where isadmin = true and iduser = (select iduser from users where username like $1) and idgroup = $2', [username, id]);
 
