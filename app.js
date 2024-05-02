@@ -22,12 +22,20 @@ App.use('/groups', Groups_router);
 App.use('/favorites', Favorites_router);
 App.use('/review', Review_router);
 
-App.use(authenticateToken);
+//App.use(authenticateToken);
 
 App.listen(process.env.PORT, function(err){
     if (err) console.log(err);
     console.log("listening port " + process.env.PORT);
 });
+
+App.get('/*', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html', function (err) {
+    if(err) {
+      res.status(500).send(err)
+    }
+  })
+})
 
 module.exports=App;
 
