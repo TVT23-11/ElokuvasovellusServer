@@ -76,6 +76,8 @@ Kuva 4. Käyttöliittymän teatterinäytöksen valinta – sivu.
 
  
 
-Sovelluksen esittely kuvin + tekstein tai videolla:  
+[Esittelyvideo](https://www.youtube.com/watch?v=QJQU2sthYj4) 
 
 [API-dokumentaatio](https://documenter.getpostman.com/view/30128179/2sA3JDi6HT)
+
+This project is licensed under the terms of the MIT license.
